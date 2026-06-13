@@ -1,0 +1,11 @@
+# Install this file first, then install Ontolearn without its pinned old
+# python-sat dependency:
+#
+#   python -m pip install -r requirements-ontolearn.txt
+#   python -m pip install --no-deps ontolearn==0.10.0
+#
+# Why two commands? Ontolearn 0.10.0 pins python-sat==0.1.7.dev23. That old
+# release often builds from source and fails on macOS arm64 + Python 3.12
+# with missing C++ headers such as <cmath>. The newer python-sat wheel below
+# provides the required `pysat` module without local compilation.
+-r requirements-ontolearn-deps.txt

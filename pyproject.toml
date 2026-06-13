@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xai-miniproject"
+version = "0.1.0"
+description = "Strategy 3 mini project: global description-logic explanations for GNN predictions on RDF datasets."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "torch>=2.3",
+  "rdflib>=7.0",
+  "pandas>=2.2",
+  "PyYAML>=6.0",
+  "scikit-learn>=1.4",
+  "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+concept = ["ontolearn>=0.9.2"]
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
+[project.scripts]
+xai-mini = "xai_miniproject.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
