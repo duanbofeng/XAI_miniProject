@@ -1,0 +1,83 @@
+(base) orange@orangedeMacBook-Air XAI_miniproject %  conda activate xai
+(xai) orange@orangedeMacBook-Air XAI_miniproject % xai-mini run-all
+Dataset: aifb
+Triples: 29226
+Model nodes: 2835
+Model edges: 40676
+Relations: 44
+Train/test examples: 140/36
+Saved statistics to /Users/orange/Documents/XAI_miniproject/artifacts/aifb/dataset_stats.json
+epoch=001 loss=1.4315 train_acc=0.179 test_acc=0.167 train_f1=0.169 test_f1=0.071
+epoch=025 loss=0.0056 train_acc=1.000 test_acc=0.889 train_f1=1.000 test_f1=0.875
+epoch=050 loss=0.0061 train_acc=1.000 test_acc=0.861 train_f1=1.000 test_f1=0.833
+epoch=075 loss=0.0031 train_acc=1.000 test_acc=0.889 train_f1=1.000 test_f1=0.875
+epoch=100 loss=0.0018 train_acc=1.000 test_acc=0.889 train_f1=1.000 test_f1=0.875
+epoch=125 loss=0.0026 train_acc=1.000 test_acc=0.889 train_f1=1.000 test_f1=0.875
+epoch=150 loss=0.0016 train_acc=1.000 test_acc=0.889 train_f1=1.000 test_f1=0.875
+epoch=175 loss=0.0017 train_acc=1.000 test_acc=0.861 train_f1=1.000 test_f1=0.842
+epoch=200 loss=0.0018 train_acc=1.000 test_acc=0.861 train_f1=1.000 test_f1=0.842
+epoch=225 loss=0.0021 train_acc=1.000 test_acc=0.861 train_f1=1.000 test_f1=0.842
+epoch=250 loss=0.0014 train_acc=1.000 test_acc=0.861 train_f1=1.000 test_f1=0.842
+Saved artifacts to /Users/orange/Documents/XAI_miniproject/artifacts/aifb
+Explaining Business Information and Communication Systems: 40 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ∀ member⁻.(¬Project)    F1:0.66667      Heuristic:0.01567:
+2-      ∀ publication.(¬Article)        F1:0.63366      Heuristic:-0.02724:
+3-      ≤ 0 publication.(¬Article)      F1:0.63366      Heuristic:-0.02724:
+4-      ∀ author⁻.(¬Article)    F1:0.63366      Heuristic:-0.02724:
+5-      ∀ publication.(¬InProceedings)  F1:0.62338      Heuristic:0.05939:
+6-      ≤ 0 publication.(¬InProceedings)        F1:0.62338      Heuristic:0.05939:
+7-      ∀ author⁻.(¬InProceedings)      F1:0.62338      Heuristic:0.05939:
+8-      ≤ 1 publication.(¬Publication)  F1:0.61538      Heuristic:0.01507:
+9-      ≤ 2 publication.(¬Publication)  F1:0.60976      Heuristic:0.00867:
+10-     ∀ worksAtProject.(¬Project)     F1:0.60784      Heuristic:0.03919:
+######## Search Tree ###########
+
+Explaining Efficient Algorithms: 26 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ∀ publication.(¬Misc)   F1:0.42857      Heuristic:-0.06204:
+2-      ≤ 0 publication.(¬Misc) F1:0.42857      Heuristic:-0.06204:
+3-      ∀ author⁻.(¬Misc)       F1:0.42857      Heuristic:-0.06204:
+4-      ≤ 6 publication.(¬InProceedings)        F1:0.42593      Heuristic:-0.0715:
+5-      ≤ 5 publication.(¬InProceedings)        F1:0.42308      Heuristic:-0.07977:
+6-      ≤ 2 publication.(¬Misc) F1:0.41935      Heuristic:-0.07872:
+7-      ≤ 9 publication.(¬InProceedings)        F1:0.41739      Heuristic:-0.07758:
+8-      ≤ 8 publication.(¬InProceedings)        F1:0.41739      Heuristic:-0.08461:
+9-      ∀ publication.(¬Book)   F1:0.4127       Heuristic:-0.08267:
+10-     ≤ 0 publication.(¬Book) F1:0.4127       Heuristic:-0.08267:
+######## Search Tree ###########
+
+Explaining Knowledge Management: 40 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ¬Lecturer       F1:0.50633      Heuristic:0.00723:
+2-      ⊤       F1:0.5  Heuristic:-0.009:
+3-      ¬Workshop       F1:0.5  Heuristic:-0.001:
+4-      ¬Unpublished    F1:0.5  Heuristic:-0.001:
+5-      ¬University     F1:0.5  Heuristic:-0.001:
+6-      ¬Undergraduate  F1:0.5  Heuristic:-0.001:
+7-      ¬Topic  F1:0.5  Heuristic:-0.001:
+8-      ¬Thesis F1:0.5  Heuristic:-0.001:
+9-      ¬TechnicalStaff F1:0.5  Heuristic:-0.001:
+10-     ¬TechnicalReport        F1:0.5  Heuristic:-0.001:
+######## Search Tree ###########
+
+Explaining Complexity Management: 14 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ≤ 5 publication.(¬InProceedings)        F1:0.32099      Heuristic:-0.27757:
+2-      ≤ 4 publication.(¬InProceedings)        F1:0.31579      Heuristic:-0.18777:
+3-      ≤ 1 publication.(¬TechnicalReport)      F1:0.31111      Heuristic:-0.18788:
+4-      ≤ 1 publication.(¬Report)       F1:0.31111      Heuristic:-0.19089:
+5-      ≤ 3 publication.(¬InProceedings)        F1:0.30986      Heuristic:-0.19392:
+6-      ≤ 6 publication.(¬InProceedings)        F1:0.30952      Heuristic:-0.19139:
+7-      ≤ 7 publication.(¬InProceedings)        F1:0.30588      Heuristic:-0.19401:
+8-      ≤ 2 publication.(¬InProceedings)        F1:0.30303      Heuristic:-0.20102:
+9-      ≤ 2 publication.(¬TechnicalReport)      F1:0.30108      Heuristic:-0.19719:
+10-     ≤ 2 publication.(¬Report)       F1:0.30108      Heuristic:-0.20092:
+######## Search Tree ###########
+
+Saved explanation results to /Users/orange/Documents/XAI_miniproject/artifacts/aifb/explanation_results.json
+(xai) orange@orangedeMacBook-Air XAI_miniproject % 

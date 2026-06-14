@@ -62,8 +62,24 @@ def load_label_table(path: Path, config: DatasetConfig) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{path} is missing columns: {sorted(missing)}")
     frame[config.entity_column] = frame[config.entity_column].astype(str)
-    frame[config.label_column] = frame[config.label_column].astype(str)
+    frame[config.label_column] = frame[config.label_column].map(normalize_label_value)
     return frame
+
+
+def normalize_label_value(value: object) -> str:
+    """Keep URI labels unchanged while normalizing numeric labels such as 1.0 -> 1."""
+    if pd.isna(value):
+        raise ValueError("Label values must not be NA.")
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    text = str(value)
+    try:
+        numeric = float(text)
+    except ValueError:
+        return text
+    if numeric.is_integer() and text.strip().replace(".", "", 1).isdigit():
+        return str(int(numeric))
+    return text
 
 
 def _is_graph_resource(term: object, include_literal_nodes: bool) -> bool:
@@ -158,6 +174,46 @@ def relation_edge_groups(data: RdfGraphData) -> list[list[tuple[int, int]]]:
     for edge in data.edges:
         groups[edge.relation].append((edge.src, edge.dst))
     return groups
+
+
+def build_node_feature_lists(data: RdfGraphData, config: DatasetConfig) -> tuple[list[list[int]], dict[str, int]]:
+    feature_to_id: dict[str, int] = {}
+    feature_sets: list[set[int]] = [set() for _ in range(data.num_nodes)]
+
+    def feature_id(name: str) -> int:
+        if name not in feature_to_id:
+            feature_to_id[name] = len(feature_to_id)
+        return feature_to_id[name]
+
+    def add_feature(node_key: str, feature_name: str) -> None:
+        node_id = data.node_to_id.get(node_key)
+        if node_id is not None:
+            feature_sets[node_id].add(feature_id(feature_name))
+
+    for subject, predicate, obj in data.graph:
+        if str(predicate) in config.exclude_predicates:
+            continue
+        if predicate == RDF.type:
+            add_feature(_term_key(subject), f"type::{obj}")
+        elif isinstance(obj, Literal) and config.include_literal_nodes:
+            literal_key = _term_key(obj)
+            add_feature(literal_key, f"literal_predicate::{predicate}")
+            if obj.datatype is not None:
+                add_feature(literal_key, f"literal_datatype::{obj.datatype}")
+            lexical = str(obj)
+            if len(lexical) <= 64:
+                add_feature(literal_key, f"literal_value::{lexical}")
+
+    for node_id, node_key in enumerate(data.id_to_node):
+        if not feature_sets[node_id]:
+            if node_key.startswith("http://") or node_key.startswith("https://"):
+                feature_sets[node_id].add(feature_id("kind::resource_without_type"))
+            elif node_key.startswith("_:"):
+                feature_sets[node_id].add(feature_id("kind::blank_node"))
+            else:
+                feature_sets[node_id].add(feature_id("kind::literal"))
+
+    return [sorted(features) for features in feature_sets], feature_to_id
 
 
 def dataset_statistics(data: RdfGraphData, config: DatasetConfig) -> dict[str, object]:

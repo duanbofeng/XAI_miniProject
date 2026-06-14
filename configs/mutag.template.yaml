@@ -9,28 +9,33 @@ project:
 
 dataset:
   name: mutag
-  rdf_path: mutag-hetero/TODO.rdf
-  rdf_format: xml
+  rdf_path: mutag-hetero/mutag_stripped.nt
+  rdf_format: nt
   train_path: mutag-hetero/trainingSet.tsv
   test_path: mutag-hetero/testSet.tsv
   all_labels_path: mutag-hetero/completeDataset.tsv
-  entity_column: TODO_entity_column
-  label_column: TODO_label_column
-  target_node_type: TODO_target_node_type_uri
-  label_names: {}
+  entity_column: bond
+  label_column: label_mutagenic
+  target_node_type: http://dl-learner.org/carcinogenesis#Compound
+  label_names:
+    "0": Non-mutagenic
+    "1": Mutagenic
   exclude_predicates:
-    - TODO_label_leakage_predicate_uri
-  include_literal_nodes: false
+    - http://dl-learner.org/carcinogenesis#isMutagenic
+  include_literal_nodes: true
   add_inverse_edges: true
 
 model:
   name: rgcn
+  initial_features: rdf_types
   embedding_dim: 64
   hidden_dim: 64
   dropout: 0.25
   epochs: 250
   learning_rate: 0.01
   weight_decay: 0.0005
+  validation_fraction: 0.2
+  early_stopping_patience: 50
   log_every: 25
   device: auto
 

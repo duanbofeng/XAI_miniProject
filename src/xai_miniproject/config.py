@@ -34,12 +34,15 @@ class DatasetConfig:
 @dataclass(frozen=True)
 class ModelConfig:
     name: str
+    initial_features: str
     embedding_dim: int
     hidden_dim: int
     dropout: float
     epochs: int
     learning_rate: float
     weight_decay: float
+    validation_fraction: float
+    early_stopping_patience: int
     log_every: int
     device: str
 
@@ -109,12 +112,15 @@ def load_config(path: str | Path) -> Config:
     )
     model = ModelConfig(
         name=model_raw.get("name", "rgcn"),
+        initial_features=model_raw.get("initial_features", "node_id"),
         embedding_dim=int(model_raw.get("embedding_dim", 64)),
         hidden_dim=int(model_raw.get("hidden_dim", 64)),
         dropout=float(model_raw.get("dropout", 0.25)),
         epochs=int(model_raw.get("epochs", 250)),
         learning_rate=float(model_raw.get("learning_rate", 0.01)),
         weight_decay=float(model_raw.get("weight_decay", 5e-4)),
+        validation_fraction=float(model_raw.get("validation_fraction", 0.0)),
+        early_stopping_patience=int(model_raw.get("early_stopping_patience", 0)),
         log_every=int(model_raw.get("log_every", 25)),
         device=model_raw.get("device", "auto"),
     )

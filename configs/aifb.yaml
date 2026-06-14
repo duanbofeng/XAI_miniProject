@@ -27,12 +27,15 @@ dataset:
 
 model:
   name: rgcn
+  initial_features: node_id
   embedding_dim: 64
   hidden_dim: 64
   dropout: 0.25
   epochs: 250
   learning_rate: 0.01
   weight_decay: 0.0005
+  validation_fraction: 0.0
+  early_stopping_patience: 0
   log_every: 25
   device: auto
 

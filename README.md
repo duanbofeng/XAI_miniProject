@@ -90,6 +90,32 @@ $env:PYTHONPATH="src"
 python -m xai_miniproject.cli --config configs/aifb.yaml run-all
 ```
 
+## Device Selection
+
+The training device is configured in YAML:
+
+```yaml
+model:
+  device: auto
+```
+
+`auto` chooses the first available backend in this order:
+
+```text
+CUDA -> MPS -> CPU
+```
+
+Use explicit values when you want reproducible hardware behavior:
+
+```yaml
+device: cpu       # always run on CPU
+device: mps       # Apple Silicon GPU, only if torch.backends.mps.is_available()
+device: cuda      # NVIDIA GPU
+device: cuda:0    # specific NVIDIA GPU
+```
+
+GPU/MPS usually changes runtime, not the expected model quality. Metrics can still differ slightly because some GPU operations are less deterministic than CPU operations.
+
 ## Outputs
 
 All generated outputs go to `artifacts/aifb/`:
