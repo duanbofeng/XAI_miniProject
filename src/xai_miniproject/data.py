@@ -101,6 +101,10 @@ def _add_mapping(mapping: dict[str, int], values: list[str], key: str) -> int:
     return mapping[key]
 
 
+def sorted_graph_triples(graph: Graph) -> list[tuple[object, object, object]]:
+    return sorted(graph, key=lambda triple: tuple(_term_key(term) for term in triple))
+
+
 def build_graph_data(config: DatasetConfig) -> RdfGraphData:
     graph = load_rdf_graph(config)
     train_df = load_label_table(config.train_path, config)
@@ -120,7 +124,7 @@ def build_graph_data(config: DatasetConfig) -> RdfGraphData:
         _add_mapping(node_to_id, id_to_node, entity)
 
     excluded = set(config.exclude_predicates)
-    for subject, predicate, obj in graph:
+    for subject, predicate, obj in sorted_graph_triples(graph):
         predicate_uri = str(predicate)
         if predicate_uri in excluded:
             continue
@@ -190,7 +194,7 @@ def build_node_feature_lists(data: RdfGraphData, config: DatasetConfig) -> tuple
         if node_id is not None:
             feature_sets[node_id].add(feature_id(feature_name))
 
-    for subject, predicate, obj in data.graph:
+    for subject, predicate, obj in sorted_graph_triples(data.graph):
         if str(predicate) in config.exclude_predicates:
             continue
         if predicate == RDF.type:
@@ -222,7 +226,7 @@ def dataset_statistics(data: RdfGraphData, config: DatasetConfig) -> dict[str, o
     resource_edges = 0
     literal_edges = 0
 
-    for subject, predicate, obj in data.graph:
+    for subject, predicate, obj in sorted_graph_triples(data.graph):
         predicate_uri = str(predicate)
         predicate_counter[predicate_uri] += 1
         if predicate == RDF.type:
@@ -268,7 +272,7 @@ def filtered_graph(graph: Graph, excluded_predicates: Iterable[str]) -> Graph:
     for prefix, namespace in graph.namespaces():
         output.bind(prefix, namespace)
     excluded = set(excluded_predicates)
-    for triple in graph:
+    for triple in sorted_graph_triples(graph):
         if str(triple[1]) not in excluded:
             output.add(triple)
     return output
@@ -285,12 +289,18 @@ def neighborhood_features(
     rdf_type = str(RDF.type)
 
     object_types: dict[str, set[str]] = defaultdict(set)
-    for subject, predicate, obj in graph.triples((None, RDF.type, None)):
+    for subject, predicate, obj in sorted(
+        graph.triples((None, RDF.type, None)),
+        key=lambda triple: tuple(_term_key(term) for term in triple),
+    ):
         object_types[str(subject)].add(str(obj))
 
-    for uri in entity_set:
+    for uri in sorted(entity_set):
         node = URIRef(uri)
-        for _, predicate, obj in graph.triples((node, None, None)):
+        for _, predicate, obj in sorted(
+            graph.triples((node, None, None)),
+            key=lambda triple: tuple(_term_key(term) for term in triple),
+        ):
             predicate_uri = str(predicate)
             if predicate_uri in excluded:
                 continue
@@ -305,7 +315,10 @@ def neighborhood_features(
                     feature_map[uri].add(f"exists::{predicate_uri}::Thing")
             elif isinstance(obj, Literal):
                 feature_map[uri].add(f"literal::{predicate_uri}")
-        for subject, predicate, _ in graph.triples((None, None, node)):
+        for subject, predicate, _ in sorted(
+            graph.triples((None, None, node)),
+            key=lambda triple: tuple(_term_key(term) for term in triple),
+        ):
             predicate_uri = str(predicate)
             if predicate_uri in excluded:
                 continue

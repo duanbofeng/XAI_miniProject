@@ -77,6 +77,19 @@ xai-mini --config configs/aifb.yaml train
 xai-mini --config configs/aifb.yaml explain
 ```
 
+Each CLI run writes a copy of the terminal output to a timestamped log file:
+
+```text
+logs/aifb_log/YYYYMMDD_HHMMSS_run-all.log
+logs/mutag_log/YYYYMMDD_HHMMSS_run-all.log
+```
+
+Use `--no-log` for temporary debugging runs where no log file is needed:
+
+```bash
+xai-mini --config configs/aifb.yaml --no-log analyze
+```
+
 If you did not install the package with `pip install -e .`, use:
 
 ```bash

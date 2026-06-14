@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 artifacts/
+logs/
 .matplotlib-cache/
 .vscode/
 *.egg-info/

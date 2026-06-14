@@ -44,3 +44,54 @@ Explaining 1: 80 positive / 80 negative examples
 
 Saved explanation results to /Users/orange/Documents/XAI_miniproject/artifacts/mutag/explanation_results.json
 (xai) orange@orangedeMacBook-Air XAI_miniproject % 
+
+
+
+
+
+
+(xai) orange@orangedeMacBook-Air XAI_miniproject % xai-mini --config configs/mutag.yaml run-all
+Dataset: mutag
+Triples: 74227
+Model nodes: 23644
+Model edges: 148454
+Relations: 46
+Train/test examples: 272/68
+Saved statistics to /Users/orange/Documents/XAI_miniproject/artifacts/mutag/dataset_stats.json
+epoch=001 loss=0.6925 train_acc=0.610 test_acc=0.662 train_f1=0.379 test_f1=0.398 val_acc=0.611 val_f1=0.379
+epoch=025 loss=0.1950 train_acc=0.915 test_acc=0.750 train_f1=0.912 test_f1=0.718 val_acc=0.704 val_f1=0.693
+epoch=050 loss=0.0337 train_acc=0.945 test_acc=0.735 train_f1=0.942 test_f1=0.681 val_acc=0.722 val_f1=0.699
+Early stopping at epoch 72 with best_val_f1=0.774
+Saved artifacts to /Users/orange/Documents/XAI_miniproject/artifacts/mutag
+Explaining 0: 80 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ∀ hasStructure.(¬Ester) F1:0.71628      Heuristic:0.23016:
+2-      ∀ hasAtom.(¬Carbon-16)  F1:0.69406      Heuristic:0.20128:
+3-      ∀ hasStructure.(¬Five_ring)     F1:0.69268      Heuristic:0.19948:
+4-      ∀ hasAtom.(¬Sulfur-74)  F1:0.69264      Heuristic:0.19943:
+5-      ∀ hasAtom.(¬Oxygen-51)  F1:0.689        Heuristic:0.2947:
+6-      ∀ hasStructure.(¬Non_ar_hetero_5_ring)  F1:0.68246      Heuristic:0.2862:
+7-      ∀ hasAtom.(¬Oxygen-49)  F1:0.67606      Heuristic:0.27788:
+8-      ∀ hasStructure.(¬Methanol)      F1:0.67521      Heuristic:0.27677:
+9-      ∀ hasStructure.(¬Ring_size_4)   F1:0.67511      Heuristic:0.27664:
+10-     ∀ hasAtom.(¬Carbon-192) F1:0.67511      Heuristic:0.27664:
+######## Search Tree ###########
+
+Explaining 1: 80 positive / 80 negative examples
+######## Final step Search Tree ###########
+########  Final step Best Hypotheses ###########
+1-      ∀ hasAtom.(¬Carbon-22)  F1:0.69182      Heuristic:0.29836:
+2-      ∀ hasStructure.(¬Phenol)        F1:0.67265      Heuristic:0.27344:
+3-      ∀ hasStructure.(¬Di48)  F1:0.67234      Heuristic:0.27304:
+4-      ∀ hasStructure.(¬Di64)  F1:0.67227      Heuristic:0.27295:
+5-      ∀ hasAtom.(¬Oxygen-41)  F1:0.67227      Heuristic:0.27295:
+6-      ∀ hasStructure.(¬Amino) F1:0.66977      Heuristic:0.2697:
+7-      ∀ hasStructure.(¬Di8)   F1:0.66946      Heuristic:0.2693:
+8-      ∀ hasStructure.(¬Di67a) F1:0.66946      Heuristic:0.2693:
+9-      ∀ hasStructure.(¬Cyanate)       F1:0.66946      Heuristic:0.2693:
+10-     ∀ hasAtom.(¬Tin-113)    F1:0.66946      Heuristic:0.2693:
+######## Search Tree ###########
+
+Saved explanation results to /Users/orange/Documents/XAI_miniproject/artifacts/mutag/explanation_results.json
+(xai) orange@orangedeMacBook-Air XAI_miniproject % 
