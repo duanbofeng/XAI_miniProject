@@ -72,17 +72,33 @@ class RGCNClassifier(nn.Module):
         embedding_dim: int,
         hidden_dim: int,
         dropout: float,
+        input_feature_dim: int | None = None,
     ) -> None:
         super().__init__()
-        self.node_embeddings = nn.Embedding(num_nodes, embedding_dim)
+        self.node_embeddings = (
+            nn.Embedding(num_nodes, embedding_dim) if input_feature_dim is None else None
+        )
+        self.input_projection = (
+            nn.Linear(input_feature_dim, embedding_dim, bias=False)
+            if input_feature_dim is not None
+            else None
+        )
         self.layer1 = RGCNLayer(embedding_dim, hidden_dim, num_relations, dropout)
         self.layer2 = RGCNLayer(hidden_dim, hidden_dim, num_relations, dropout)
         self.classifier = nn.Linear(hidden_dim, num_classes)
-        nn.init.xavier_uniform_(self.node_embeddings.weight)
+        if self.node_embeddings is not None:
+            nn.init.xavier_uniform_(self.node_embeddings.weight)
 
-    def forward(self, graph: TensorGraph) -> torch.Tensor:
-        node_ids = torch.arange(graph.num_nodes, device=self.node_embeddings.weight.device)
-        x = self.node_embeddings(node_ids)
+    def forward(self, graph: TensorGraph, input_features: torch.Tensor | None = None) -> torch.Tensor:
+        if self.input_projection is not None:
+            if input_features is None:
+                raise ValueError("input_features must be provided when input_feature_dim is set.")
+            x = self.input_projection(input_features)
+        else:
+            if self.node_embeddings is None:
+                raise ValueError("node_embeddings are not initialized.")
+            node_ids = torch.arange(graph.num_nodes, device=self.node_embeddings.weight.device)
+            x = self.node_embeddings(node_ids)
         x = self.layer1(x, graph)
         x = self.layer2(x, graph)
         return self.classifier(x)

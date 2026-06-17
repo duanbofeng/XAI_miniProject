@@ -5,11 +5,11 @@ project:
 
 dataset:
   name: aifb
-  rdf_path: aifb-hetero/aifbfixed_complete.n3
+  rdf_path: data/aifb/aifbfixed_complete.n3
   rdf_format: n3
-  train_path: aifb-hetero/trainingSet.tsv
-  test_path: aifb-hetero/testSet.tsv
-  all_labels_path: aifb-hetero/completeDataset.tsv
+  train_path: data/aifb/trainingSet.tsv
+  test_path: data/aifb/testSet.tsv
+  all_labels_path: data/aifb/completeDataset.tsv
   entity_column: person
   label_column: label_affiliation
   target_node_type: http://swrc.ontoware.org/ontology#Person
@@ -27,12 +27,15 @@ dataset:
 
 model:
   name: rgcn
+  initial_features: node_id
   embedding_dim: 64
   hidden_dim: 64
   dropout: 0.25
   epochs: 250
   learning_rate: 0.01
   weight_decay: 0.0005
+  validation_fraction: 0.0
+  early_stopping_patience: 0
   log_every: 25
   device: auto
 

@@ -62,8 +62,24 @@ def load_label_table(path: Path, config: DatasetConfig) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{path} is missing columns: {sorted(missing)}")
     frame[config.entity_column] = frame[config.entity_column].astype(str)
-    frame[config.label_column] = frame[config.label_column].astype(str)
+    frame[config.label_column] = frame[config.label_column].map(normalize_label_value)
     return frame
+
+
+def normalize_label_value(value: object) -> str:
+    """Keep URI labels unchanged while normalizing numeric labels such as 1.0 -> 1."""
+    if pd.isna(value):
+        raise ValueError("Label values must not be NA.")
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    text = str(value)
+    try:
+        numeric = float(text)
+    except ValueError:
+        return text
+    if numeric.is_integer() and text.strip().replace(".", "", 1).isdigit():
+        return str(int(numeric))
+    return text
 
 
 def _is_graph_resource(term: object, include_literal_nodes: bool) -> bool:
@@ -85,6 +101,10 @@ def _add_mapping(mapping: dict[str, int], values: list[str], key: str) -> int:
     return mapping[key]
 
 
+def sorted_graph_triples(graph: Graph) -> list[tuple[object, object, object]]:
+    return sorted(graph, key=lambda triple: tuple(_term_key(term) for term in triple))
+
+
 def build_graph_data(config: DatasetConfig) -> RdfGraphData:
     graph = load_rdf_graph(config)
     train_df = load_label_table(config.train_path, config)
@@ -104,7 +124,7 @@ def build_graph_data(config: DatasetConfig) -> RdfGraphData:
         _add_mapping(node_to_id, id_to_node, entity)
 
     excluded = set(config.exclude_predicates)
-    for subject, predicate, obj in graph:
+    for subject, predicate, obj in sorted_graph_triples(graph):
         predicate_uri = str(predicate)
         if predicate_uri in excluded:
             continue
@@ -160,13 +180,53 @@ def relation_edge_groups(data: RdfGraphData) -> list[list[tuple[int, int]]]:
     return groups
 
 
+def build_node_feature_lists(data: RdfGraphData, config: DatasetConfig) -> tuple[list[list[int]], dict[str, int]]:
+    feature_to_id: dict[str, int] = {}
+    feature_sets: list[set[int]] = [set() for _ in range(data.num_nodes)]
+
+    def feature_id(name: str) -> int:
+        if name not in feature_to_id:
+            feature_to_id[name] = len(feature_to_id)
+        return feature_to_id[name]
+
+    def add_feature(node_key: str, feature_name: str) -> None:
+        node_id = data.node_to_id.get(node_key)
+        if node_id is not None:
+            feature_sets[node_id].add(feature_id(feature_name))
+
+    for subject, predicate, obj in sorted_graph_triples(data.graph):
+        if str(predicate) in config.exclude_predicates:
+            continue
+        if predicate == RDF.type:
+            add_feature(_term_key(subject), f"type::{obj}")
+        elif isinstance(obj, Literal) and config.include_literal_nodes:
+            literal_key = _term_key(obj)
+            add_feature(literal_key, f"literal_predicate::{predicate}")
+            if obj.datatype is not None:
+                add_feature(literal_key, f"literal_datatype::{obj.datatype}")
+            lexical = str(obj)
+            if len(lexical) <= 64:
+                add_feature(literal_key, f"literal_value::{lexical}")
+
+    for node_id, node_key in enumerate(data.id_to_node):
+        if not feature_sets[node_id]:
+            if node_key.startswith("http://") or node_key.startswith("https://"):
+                feature_sets[node_id].add(feature_id("kind::resource_without_type"))
+            elif node_key.startswith("_:"):
+                feature_sets[node_id].add(feature_id("kind::blank_node"))
+            else:
+                feature_sets[node_id].add(feature_id("kind::literal"))
+
+    return [sorted(features) for features in feature_sets], feature_to_id
+
+
 def dataset_statistics(data: RdfGraphData, config: DatasetConfig) -> dict[str, object]:
     type_counter: Counter[str] = Counter()
     predicate_counter: Counter[str] = Counter()
     resource_edges = 0
     literal_edges = 0
 
-    for subject, predicate, obj in data.graph:
+    for subject, predicate, obj in sorted_graph_triples(data.graph):
         predicate_uri = str(predicate)
         predicate_counter[predicate_uri] += 1
         if predicate == RDF.type:
@@ -212,7 +272,7 @@ def filtered_graph(graph: Graph, excluded_predicates: Iterable[str]) -> Graph:
     for prefix, namespace in graph.namespaces():
         output.bind(prefix, namespace)
     excluded = set(excluded_predicates)
-    for triple in graph:
+    for triple in sorted_graph_triples(graph):
         if str(triple[1]) not in excluded:
             output.add(triple)
     return output
@@ -229,12 +289,18 @@ def neighborhood_features(
     rdf_type = str(RDF.type)
 
     object_types: dict[str, set[str]] = defaultdict(set)
-    for subject, predicate, obj in graph.triples((None, RDF.type, None)):
+    for subject, predicate, obj in sorted(
+        graph.triples((None, RDF.type, None)),
+        key=lambda triple: tuple(_term_key(term) for term in triple),
+    ):
         object_types[str(subject)].add(str(obj))
 
-    for uri in entity_set:
+    for uri in sorted(entity_set):
         node = URIRef(uri)
-        for _, predicate, obj in graph.triples((node, None, None)):
+        for _, predicate, obj in sorted(
+            graph.triples((node, None, None)),
+            key=lambda triple: tuple(_term_key(term) for term in triple),
+        ):
             predicate_uri = str(predicate)
             if predicate_uri in excluded:
                 continue
@@ -249,7 +315,10 @@ def neighborhood_features(
                     feature_map[uri].add(f"exists::{predicate_uri}::Thing")
             elif isinstance(obj, Literal):
                 feature_map[uri].add(f"literal::{predicate_uri}")
-        for subject, predicate, _ in graph.triples((None, None, node)):
+        for subject, predicate, _ in sorted(
+            graph.triples((None, None, node)),
+            key=lambda triple: tuple(_term_key(term) for term in triple),
+        ):
             predicate_uri = str(predicate)
             if predicate_uri in excluded:
                 continue

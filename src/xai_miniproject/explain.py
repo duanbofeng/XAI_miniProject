@@ -12,7 +12,7 @@ from rdflib import OWL, RDF, URIRef
 
 from xai_miniproject.config import Config
 from xai_miniproject.data import filtered_graph, load_rdf_graph, neighborhood_features
-from xai_miniproject.utils import ensure_dir, short_uri, write_json
+from xai_miniproject.utils import ensure_dir, seed_everything, short_uri, write_json
 
 
 @dataclass(frozen=True)
@@ -24,6 +24,7 @@ class LearningProblem:
 
 
 def run_explanations(config: Config) -> dict[str, Any]:
+    seed_everything(config.explanation.random_seed)
     output_dir = ensure_dir(config.project.artifacts_dir)
     predictions_path = output_dir / "predictions.csv"
     if not predictions_path.exists():

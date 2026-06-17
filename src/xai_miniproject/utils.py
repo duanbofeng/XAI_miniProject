@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import random
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,7 @@ def read_json(path: str | Path) -> Any:
 
 
 def seed_everything(seed: int) -> None:
+    os.environ.setdefault("PYTHONHASHSEED", str(seed))
     random.seed(seed)
     try:
         import numpy as np
@@ -36,6 +38,10 @@ def seed_everything(seed: int) -> None:
         import torch
 
         torch.manual_seed(seed)
+        torch.use_deterministic_algorithms(True, warn_only=True)
+        if hasattr(torch.backends, "cudnn"):
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
     except ImportError:
