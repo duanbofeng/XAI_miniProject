@@ -5,11 +5,11 @@ project:
 
 dataset:
   name: mutag
-  rdf_path: mutag-hetero/mutag_stripped.nt
+  rdf_path: data/mutag/mutag_stripped.nt
   rdf_format: nt
-  train_path: mutag-hetero/trainingSet.tsv
-  test_path: mutag-hetero/testSet.tsv
-  all_labels_path: mutag-hetero/completeDataset.tsv
+  train_path: data/mutag/trainingSet.tsv
+  test_path: data/mutag/testSet.tsv
+  all_labels_path: data/mutag/completeDataset.tsv
   entity_column: bond
   label_column: label_mutagenic
   target_node_type: http://dl-learner.org/carcinogenesis#Compound
