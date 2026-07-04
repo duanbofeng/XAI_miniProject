@@ -54,15 +54,17 @@ def run_training(config: Config) -> dict[str, object]:
     input_features = None
     input_feature_dim = None
     feature_mapping = None
-    if config.model.initial_features == "rdf_types":
-        feature_lists, feature_mapping = build_node_feature_lists(data, config.dataset)
+    if config.model.initial_features in ("rdf_types", "rdf_neighborhood"):
+        feature_lists, feature_mapping = build_node_feature_lists(
+            data, config.dataset, initial_features=config.model.initial_features
+        )
         input_feature_dim = len(feature_mapping)
         input_features = torch.zeros((data.num_nodes, input_feature_dim), dtype=torch.float32, device=device)
         for node_id, feature_ids in enumerate(feature_lists):
             input_features[node_id, feature_ids] = 1.0
     elif config.model.initial_features != "node_id":
         raise ValueError(
-            "model.initial_features must be either 'node_id' or 'rdf_types', "
+            "model.initial_features must be one of 'node_id', 'rdf_types', or 'rdf_neighborhood', "
             f"got {config.model.initial_features!r}."
         )
 
@@ -93,6 +95,9 @@ def run_training(config: Config) -> dict[str, object]:
         hidden_dim=config.model.hidden_dim,
         dropout=config.model.dropout,
         input_feature_dim=input_feature_dim,
+        num_layers=config.model.num_layers,
+        use_residual=config.model.use_residual,
+        use_layer_norm=config.model.use_layer_norm,
     ).to(device)
     optimizer = torch.optim.Adam(
         model.parameters(),

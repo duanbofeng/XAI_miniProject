@@ -180,9 +180,12 @@ def relation_edge_groups(data: RdfGraphData) -> list[list[tuple[int, int]]]:
     return groups
 
 
-def build_node_feature_lists(data: RdfGraphData, config: DatasetConfig) -> tuple[list[list[int]], dict[str, int]]:
+def build_node_feature_lists(
+    data: RdfGraphData, config: DatasetConfig, initial_features: str = "rdf_types"
+) -> tuple[list[list[int]], dict[str, int]]:
     feature_to_id: dict[str, int] = {}
     feature_sets: list[set[int]] = [set() for _ in range(data.num_nodes)]
+    use_neighborhood = initial_features == "rdf_neighborhood"
 
     def feature_id(name: str) -> int:
         if name not in feature_to_id:
@@ -194,19 +197,42 @@ def build_node_feature_lists(data: RdfGraphData, config: DatasetConfig) -> tuple
         if node_id is not None:
             feature_sets[node_id].add(feature_id(feature_name))
 
+    object_types: dict[str, set[str]] = defaultdict(set)
+    if use_neighborhood:
+        for subject, predicate, obj in sorted_graph_triples(data.graph):
+            if predicate == RDF.type:
+                object_types[_term_key(subject)].add(str(obj))
+
     for subject, predicate, obj in sorted_graph_triples(data.graph):
-        if str(predicate) in config.exclude_predicates:
+        predicate_uri = str(predicate)
+        if predicate_uri in config.exclude_predicates:
             continue
+        subject_key = _term_key(subject)
         if predicate == RDF.type:
-            add_feature(_term_key(subject), f"type::{obj}")
-        elif isinstance(obj, Literal) and config.include_literal_nodes:
-            literal_key = _term_key(obj)
-            add_feature(literal_key, f"literal_predicate::{predicate}")
-            if obj.datatype is not None:
-                add_feature(literal_key, f"literal_datatype::{obj.datatype}")
-            lexical = str(obj)
-            if len(lexical) <= 64:
-                add_feature(literal_key, f"literal_value::{lexical}")
+            add_feature(subject_key, f"type::{obj}")
+        elif isinstance(obj, Literal):
+            if config.include_literal_nodes:
+                literal_key = _term_key(obj)
+                add_feature(literal_key, f"literal_predicate::{predicate}")
+                if obj.datatype is not None:
+                    add_feature(literal_key, f"literal_datatype::{obj.datatype}")
+                lexical = str(obj)
+                if len(lexical) <= 64:
+                    add_feature(literal_key, f"literal_value::{lexical}")
+            if use_neighborhood:
+                add_feature(subject_key, f"literal_predicate::{predicate}")
+                if obj.datatype is not None:
+                    add_feature(subject_key, f"literal_datatype::{obj.datatype}")
+                lexical = str(obj)
+                if len(lexical) <= 64:
+                    add_feature(subject_key, f"literal_value::{lexical}")
+        elif use_neighborhood and isinstance(obj, (URIRef, BNode)):
+            obj_types = object_types.get(_term_key(obj), set())
+            if obj_types:
+                for obj_type in obj_types:
+                    add_feature(subject_key, f"exists::{predicate_uri}::{obj_type}")
+            else:
+                add_feature(subject_key, f"exists::{predicate_uri}::Thing")
 
     for node_id, node_key in enumerate(data.id_to_node):
         if not feature_sets[node_id]:
