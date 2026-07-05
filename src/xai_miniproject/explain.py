@@ -29,7 +29,8 @@ def run_explanations(config: Config) -> dict[str, Any]:
     predictions_path = output_dir / "predictions.csv"
     if not predictions_path.exists():
         raise FileNotFoundError(
-            f"{predictions_path} does not exist. Run `xai-mini train --config {config.path}` first."
+            f"{predictions_path} does not exist. Run "
+            f"`xai-mini --config {config.path} train` first."
         )
 
     graph = load_rdf_graph(config.dataset)

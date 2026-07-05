@@ -181,7 +181,7 @@ def relation_edge_groups(data: RdfGraphData) -> list[list[tuple[int, int]]]:
 
 
 def build_node_feature_lists(
-    data: RdfGraphData, config: DatasetConfig, initial_features: str = "rdf_types"
+    data: RdfGraphData, config: DatasetConfig, initial_features: str = "rdf_neighborhood"
 ) -> tuple[list[list[int]], dict[str, int]]:
     feature_to_id: dict[str, int] = {}
     feature_sets: list[set[int]] = [set() for _ in range(data.num_nodes)]
