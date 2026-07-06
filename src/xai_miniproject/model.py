@@ -73,8 +73,13 @@ class RGCNClassifier(nn.Module):
         hidden_dim: int,
         dropout: float,
         input_feature_dim: int | None = None,
+        num_layers: int = 2,
+        use_residual: bool = False,
+        use_layer_norm: bool = False,
     ) -> None:
         super().__init__()
+        self.num_layers = num_layers
+        self.use_residual = use_residual
         self.node_embeddings = (
             nn.Embedding(num_nodes, embedding_dim) if input_feature_dim is None else None
         )
@@ -83,8 +88,12 @@ class RGCNClassifier(nn.Module):
             if input_feature_dim is not None
             else None
         )
-        self.layer1 = RGCNLayer(embedding_dim, hidden_dim, num_relations, dropout)
-        self.layer2 = RGCNLayer(hidden_dim, hidden_dim, num_relations, dropout)
+        self.layers = nn.ModuleList()
+        self.layer_norms = nn.ModuleList()
+        for layer_idx in range(num_layers):
+            in_dim = embedding_dim if layer_idx == 0 else hidden_dim
+            self.layers.append(RGCNLayer(in_dim, hidden_dim, num_relations, dropout))
+            self.layer_norms.append(nn.LayerNorm(hidden_dim) if use_layer_norm else nn.Identity())
         self.classifier = nn.Linear(hidden_dim, num_classes)
         if self.node_embeddings is not None:
             nn.init.xavier_uniform_(self.node_embeddings.weight)
@@ -99,6 +108,9 @@ class RGCNClassifier(nn.Module):
                 raise ValueError("node_embeddings are not initialized.")
             node_ids = torch.arange(graph.num_nodes, device=self.node_embeddings.weight.device)
             x = self.node_embeddings(node_ids)
-        x = self.layer1(x, graph)
-        x = self.layer2(x, graph)
+        for layer, norm in zip(self.layers, self.layer_norms, strict=True):
+            h = norm(layer(x, graph))
+            if self.use_residual and h.shape == x.shape:
+                h = h + x
+            x = h
         return self.classifier(x)

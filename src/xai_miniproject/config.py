@@ -45,6 +45,9 @@ class ModelConfig:
     early_stopping_patience: int
     log_every: int
     device: str
+    num_layers: int = 2
+    use_residual: bool = False
+    use_layer_norm: bool = False
 
 
 @dataclass(frozen=True)
@@ -123,6 +126,9 @@ def load_config(path: str | Path) -> Config:
         early_stopping_patience=int(model_raw.get("early_stopping_patience", 0)),
         log_every=int(model_raw.get("log_every", 25)),
         device=model_raw.get("device", "auto"),
+        num_layers=int(model_raw.get("num_layers", 2)),
+        use_residual=bool(model_raw.get("use_residual", False)),
+        use_layer_norm=bool(model_raw.get("use_layer_norm", False)),
     )
     explanation = ExplanationConfig(
         learner=explanation_raw.get("learner", "CELOE"),

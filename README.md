@@ -1,28 +1,41 @@
-# XAI Mini Project: Global DL Explanations for RDF GNNs
+# XAI Mini Project: AIFB R-GCN with Global DL Explanations
 
-This project implements Strategy 3 from the XAI mini project: train an R-GCN on an RDF dataset, convert the GNN predictions into positive and negative examples, and learn global description-logic explanations with CELOE from Ontolearn.
+This repository contains the final AIFB-only version of the XAI mini project.
+It implements Strategy 3:
 
-The code is configuration-driven. The same pipeline runs three experiments:
+1. train an R-GCN on the AIFB RDF knowledge graph,
+2. convert the model predictions into positive/negative examples,
+3. learn global description-logic explanations with Ontolearn/CELOE.
+
+The final report uses two AIFB experiments only:
 
 | Experiment | Config | Purpose |
 | --- | --- | --- |
-| AIFB | `configs/aifb.yaml` | Research group prediction on AIFB |
-| MUTAG | `configs/mutag.yaml` | Mutagenicity prediction using RDF type/literal node features |
-| MUTAG node-id ablation | `configs/mutag_node_id.yaml` | Ablation without RDF-derived initial features |
+| AIFB best model | `configs/aifb.yaml` | RDF-neighborhood features, residual 2-layer R-GCN, early stopping |
+| AIFB baseline | `configs/aifb_baseline.yaml` | node-id embeddings, original simpler R-GCN baseline |
 
 ## Repository Layout
 
 ```text
-configs/                  Experiment configs
-data/                     RDF datasets and train/test label splits
-docs/                     Course/project reference material
-src/xai_miniproject/      Python package
-tests/                    Small regression tests
-artifacts/                Generated outputs, ignored by git
-logs/                     Timestamped terminal logs, ignored by git
+configs/
+  aifb.yaml               # final model used in the report
+  aifb_baseline.yaml      # node-id baseline for comparison
+data/aifb/                # AIFB RDF graph and label splits
+src/xai_miniproject/      # package source code
+tests/                    # lightweight regression tests
+requirements.txt          # core dependencies
+requirements-ontolearn.txt # optional CELOE dependencies
 ```
 
-Important generated files are written under `artifacts/<experiment>/`:
+Generated outputs are ignored by git and are written to:
+
+```text
+artifacts/aifb/
+artifacts/aifb_baseline/
+logs/
+```
+
+Important generated files:
 
 ```text
 dataset_stats.json
@@ -34,19 +47,9 @@ explanation_results.json
 explanation_results.csv
 ```
 
-Each CLI run also writes a terminal log:
-
-```text
-logs/aifb_log/YYYYMMDD_HHMMSS_run-all.log
-logs/mutag_log/YYYYMMDD_HHMMSS_run-all.log
-logs/mutag_node_id_log/YYYYMMDD_HHMMSS_run-all.log
-```
-
 ## Setup
 
 Use Python 3.10 or newer. Python 3.12 has been tested on macOS.
-
-### macOS/Linux
 
 ```bash
 python -m venv .venv
@@ -56,17 +59,7 @@ python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-### Windows PowerShell
-
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python -m pip install -e .
-```
-
-### Conda
+Conda alternative:
 
 ```bash
 conda create -n xai python=3.12
@@ -75,83 +68,76 @@ python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-## Install Ontolearn / CELOE
+## Optional: Install Ontolearn / CELOE
 
-Install the CELOE dependencies after the core pipeline works:
+The classifier can be trained without Ontolearn. For the report-style symbolic explanations, install
+Ontolearn as follows:
 
 ```bash
 python -m pip install -r requirements-ontolearn.txt
 python -m pip install --no-deps ontolearn==0.10.0
 ```
 
-The two-step install avoids Ontolearn's pinned `python-sat==0.1.7.dev23`, which can fail to compile on macOS arm64 with Python 3.12. The project has been verified with the newer prebuilt `python-sat` wheel installed from `requirements-ontolearn.txt`.
+The two-step install avoids Ontolearn's old pinned `python-sat` dependency, which can fail to compile on
+some macOS/Python combinations. If Ontolearn is unavailable, the code falls back to a simple feature-based
+explainer so the pipeline still runs end-to-end.
 
-If Ontolearn is not installed, the code falls back to a simple baseline explainer so the pipeline can still run, but the main results should use `backend: ontolearn`.
+## Quick Reproduction
 
-## Run Experiments
-
-Run the default AIFB experiment:
-
-```bash
-xai-mini run-all
-```
-
-Run a specific experiment:
+Run the final AIFB model used in the report:
 
 ```bash
 xai-mini --config configs/aifb.yaml run-all
-xai-mini --config configs/mutag.yaml run-all
-xai-mini --config configs/mutag_node_id.yaml run-all
 ```
 
-Run individual stages:
+Run the node-id baseline:
 
 ```bash
-xai-mini --config configs/mutag.yaml analyze
-xai-mini --config configs/mutag.yaml train
-xai-mini --config configs/mutag.yaml explain
+xai-mini --config configs/aifb_baseline.yaml train
 ```
 
-Disable terminal log creation for temporary debugging:
+Run individual stages for the final model:
 
 ```bash
-xai-mini --config configs/mutag.yaml --no-log train
+xai-mini --config configs/aifb.yaml analyze
+xai-mini --config configs/aifb.yaml train
+xai-mini --config configs/aifb.yaml explain
 ```
 
-If the package is not installed with `pip install -e .`, run via module path:
+If the package is not installed with `pip install -e .`, use the module form:
 
 ```bash
-PYTHONPATH=src python -m xai_miniproject.cli --config configs/mutag.yaml run-all
+PYTHONPATH=src python -m xai_miniproject.cli --config configs/aifb.yaml run-all
+PYTHONPATH=src python -m xai_miniproject.cli --config configs/aifb_baseline.yaml train
 ```
 
-Windows PowerShell equivalent:
+Add `--no-log` for quick local debugging:
 
-```powershell
-$env:PYTHONPATH="src"
-python -m xai_miniproject.cli --config configs/mutag.yaml run-all
+```bash
+xai-mini --config configs/aifb.yaml --no-log train
 ```
 
-## Current Expected Results
+## Expected Results
 
-The exact numbers can vary slightly across platforms and dependency versions. On the tested macOS conda environment:
+Results can vary slightly by platform and PyTorch version. On the tested CPU environment:
 
-| Experiment | Initial features | Test macro-F1 | Explanation backend |
-| --- | --- | ---: | --- |
-| AIFB | node-id embedding | about 0.84 | Ontolearn CELOE |
-| MUTAG | RDF type/literal features | about 0.71 | Ontolearn CELOE |
-| MUTAG node-id ablation | node-id embedding | about 0.54 | Ontolearn CELOE |
+| Experiment | Initial features | Test accuracy | Test macro-F1 |
+| --- | --- | ---: | ---: |
+| AIFB baseline | node-id embedding | about 86.1% | about 0.842 |
+| AIFB best model | RDF-neighborhood features | about 94.4% | about 0.912 |
 
-The MUTAG ablation is intentionally worse: it tests the effect of removing RDF-derived initial node features.
+The final model normally reaches 34/36 correct test predictions. It writes explanations for the four
+predicted research groups under `artifacts/aifb/explanation_results.json`.
 
 ## Development Checks
-
-Install the optional development tools first:
-
-```bash
-python -m pip install -e ".[dev]"
-```
 
 ```bash
 python -m compileall -q src
 python -m pytest
+```
+
+If the package has not been installed:
+
+```bash
+PYTHONPATH=src python -m pytest
 ```
